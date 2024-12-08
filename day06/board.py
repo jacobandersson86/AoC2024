@@ -56,7 +56,6 @@ class Board:
 
         Board.board[start.y][start.x] = 'X'  # Leave a trail
 
-
         if not position.y in range(len(Board.board)) or not position.x in range(len(Board.board[0])):
             Board.any_guard = False
             return

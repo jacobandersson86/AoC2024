@@ -5,19 +5,10 @@ from itertools import cycle
 class Guard:
     position = Position
     direction = Position
-
-    # next_direction = {
-    #     Position(0, -1) : Position(1, 0),
-    #     Position(1, 0)  : Position(0, 1),
-    #     Position(0, 1)  : Position(-1, 0),
-    #     Position(-1, 0) : Position(0, -1)
-    # }
-
-    # next_direction = [
-    # ]
+    turning_points = []
 
     @staticmethod
-    def initiate(position : Position, direction = Position(0, -1)):
+    def initiate(position : Position):
         Guard.position = position
         Guard.next_direction = cycle([
             Position(0, -1),
@@ -32,6 +23,7 @@ class Guard:
         # Peek what next tile looks like
         next_tile = Board.peek(Guard.position + Guard.direction)
         if next_tile == '#':
+            Guard.turning_points.append(Guard.position)
             Guard.direction = next(Guard.next_direction)
 
         Guard.position += Guard.direction
