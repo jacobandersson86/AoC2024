@@ -1,5 +1,5 @@
 import numpy as np
-import re
+import itertools
 
 def read_input(input):
     with open(input) as f:
@@ -9,90 +9,92 @@ def read_input(input):
     lines = [[c for c in line.strip()] for line in lines]
     return lines
 
-def shape_of_text(text):
-    return (len(text), len(text[0]))
+def find_all(text, expr):
+    positions = []
+    for y, row in enumerate(text):
+        if y == 0 or y == len(text) - 1:
+            continue
+        for x, char in enumerate(row):
+            if x == 0 or x == len(text[0]) - 1:
+                continue
+            if char == expr:
+                positions.append((x, y))
+    return positions
 
-def print_text(text):
-    for row in text:
-        for c in row:
-            print(f"{c} ", end='')
-        print('')
+def get_char(text, pos):
+    x, y = pos
+    if x < 0 or y < 0:
+        return None
+    if y >= len(text) or x >= len(text[0]):
+        return None
 
-def rotate_90_cw(text):
-    rows, columns = shape_of_text(text)
-    rotated = [['.' for _ in range(rows)] for _ in range(columns)]
+    return text[y][x]
 
-    for row, line in enumerate(text):
-        for column, character in enumerate(line):
-            rotated[column][rows - 1 - row] = character
+def match_in_any_direction(text, start):
+    directions = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
+    sum = 0
+    for dx, dy in directions:
+        x, y = start
+        positions = [(x + dx * (i + 1), y + dy * (i + 1)) for i in range(3)]
+        chars = [get_char(text, pos) for pos in positions]
+        try:
+            expr = ''.join(chars)
+        except TypeError:
+            continue
+        if expr == 'MAS':
+            sum += 1
+    return sum
 
-    return rotated
+def get_expr(text, mid, ds):
+    dx, dy = ds
+    x, y = mid
+    positions = [(x + dx * (i - 1), y + dy * (i - 1)) for i in range(3)]
+    chars = [get_char(text, pos) for pos in positions]
+    try:
+        expr = ''.join(chars)
+    except TypeError:
+        return None
+    return expr
 
-def rotate_45_cw(text):
-    rows, columns = shape_of_text(text)
-    output_rows = rows + columns - 1
-    rotated = [['.' for _ in range(columns)] for _ in range(output_rows)]
+def find_x_shape(text, mid):
+    directions = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+    directions_offset = [(1, -1), (-1, -1), (-1, 1), (1, 1)]
+    dir_len = len(directions)
+    directions = itertools.cycle(directions)
+    directions_offset = itertools.cycle(directions_offset)
+    sum = 0
+    for _ in range(dir_len):
+        ds = next(directions)
+        ds90 = next(directions_offset)
 
-    # Scan Top right triangle
-    lengths = [v + 1 for v in range(columns)]
-    for i, length in enumerate(lengths):
-        for v in range(length):
-            x = v
-            y = length - v - 1
-            c = text[y][x]
-            rotated[i][v] = c
+        expr = get_expr(text, mid, ds)
+        expr90 = get_expr(text, mid, ds90)
+        if expr is None or expr90 is None:
+            continue
+        if expr != 'MAS' or expr90 != 'MAS':
+            continue
+        sum += 1
 
-    # Scan bottom left
-    lengths = lengths[-2::-1]
-    for i, length in enumerate(lengths):
-        for v in range(length):
-            x = columns - 1 - (length - v - 1)
-            y = rows - 1 - v
-            c = text[y][x]
-            rotated[i + rows][v] = c
-
-    return rotated
-
-def count_occurrences(text, word):
-    matches = []
-    for line in text:
-        line = ''.join(line)
-        matches.append(re.findall(f"{word}", line))
-    n = [1 for match in matches if len(match) != 0]
-    return sum(n)
+    return sum
 
 def main():
+    text = read_input("day04/input/input.txt")
+
+    starts = find_all(text, 'X')
     sum = 0
-    normal = read_input('input/input.txt')
-    print_text(normal)
-    sum += count_occurrences(normal, 'XMAS')
-    sum += count_occurrences(normal, 'SAMX')
-    print(sum)
-
-    diagonal_45 = rotate_45_cw(normal)
-    print()
-    print_text(diagonal_45)
-    sum += count_occurrences(diagonal_45, 'XMAS')
-    sum += count_occurrences(diagonal_45, 'SAMX')
-    print(sum)
-
-    vertical = rotate_90_cw(normal)
-    print()
-    print_text(vertical)
-    sum += count_occurrences(vertical, 'XMAS')
-    sum += count_occurrences(vertical, 'SAMX')
-    print(sum)
-
-    diagonal_135 = rotate_45_cw(vertical)
-    print()
-    print_text(diagonal_135)
-    sum += count_occurrences(diagonal_135, 'XMAS')
-    sum += count_occurrences(diagonal_135, 'SAMX')
-    print(sum)
+    for start in starts:
+        sum += match_in_any_direction(text, start)
 
     print(f"Part 1: {sum}")
-    # 1209 is to low
 
+    sum = 0
+    mids = find_all(text, 'A')
+    for mid in mids:
+        sum += find_x_shape(text, mid)
+
+    print(f"Part 2: {sum}")
+    #1952 is to high
+    #1949 is to high
 
 if __name__ == '__main__':
     main()
