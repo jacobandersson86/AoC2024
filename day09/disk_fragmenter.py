@@ -36,7 +36,7 @@ def defragment(disk):
             break
         disk[void] = element
         disk[i] = '.'
-        # print_disk(disk)
+        print_disk(disk)
 
     return disk
 
@@ -55,6 +55,8 @@ def defragment_files(disk, disk_map):
     files = iter(reversed(files))
     for file_size, file_location, file_id in files:
         for i, (void_size, void_location) in enumerate(voids):
+            if file_location <= void_location:
+                break
             if file_size <= void_size:
                 for offset, _ in enumerate(disk[void_location:void_location + file_size]):
                     disk[void_location + offset] = file_id
@@ -64,9 +66,9 @@ def defragment_files(disk, disk_map):
                     del voids[i]
                 else:
                     voids[i] = (void_size - file_size, void_location + file_size)
+                print_disk(disk)
                 break
 
-        # print_disk(disk)
     return disk
 
 
@@ -82,22 +84,17 @@ def print_disk(disk):
     print(''.join(str(element) for element in disk))
 
 def main():
-    disk_map = read_input("day09/input/input.txt")
+    disk_map = read_input("day09/input/example.txt")
     disk = expand_disk(disk_map)
     disk_copy = copy.deepcopy(disk)
-    # print_disk(disk)
+    print_disk(disk)
     disk = defragment(disk)
     checksum = calculate_checksum(disk)
     print(f"Part 1: {checksum}")
 
     disk = defragment_files(disk_copy, disk_map)
-    # print_disk(disk)
+    print_disk(disk)
     checksum = calculate_checksum(disk)
-    try:
-        assert(checksum < 8355781418715)
-    except AssertionError:
-        print(f"Part 2: {checksum} is to high!")
-        exit()
 
     print(f"Part 2: {checksum}")
 
