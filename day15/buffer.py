@@ -28,8 +28,7 @@ class Buffer:
                 if item == None:
                     print_buffer.append(' ')
                     continue
-                print_buffer.append(item.character)
+                print_buffer.append(next(item.character))
             print_buffer.append('\n')
 
         print(''.join(print_buffer), end='')
-

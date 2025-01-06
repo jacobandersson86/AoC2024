@@ -1,5 +1,6 @@
 from position import Position
 from buffer import Buffer
+import itertools
 
 def read_input(file):
     with open(file) as f:
@@ -26,41 +27,70 @@ def read_input(file):
 class Item:
     def __init__(self, position : Position, buffer : Buffer):
         self.position = position
+        self.size = (2, 1)
         self.buffer = buffer
 
     def draw(self):
-        self.buffer[self.position] = self
+        for x in range(self.size[0]):
+            for y in range(self.size[1]):
+                self.buffer[self.position + Position(1 * x, 1 * y)] = self
 
     def can_move(self, direction : Position):
-        item = self.buffer[self.position + direction]
-        if item == None:
-            return True
-        if isinstance(item, Wall):
-            return False
-        if isinstance(item, Box):
-            return item.can_move(direction)
+        items = []
+        for x in range(self.size[0]):
+            for y in range(self.size[1]):
+                items.append(self.buffer[self.position + direction + Position(1 * x, 1 * y)])
+
+        if any(items) == False and items[0] == None:
+            return [True]
+
+        ret_vals = []
+        for item in items:
+            if item == self:
+                continue
+            if isinstance(item, Wall):
+                return [False]
+            if isinstance(item, Box):
+                ret_vals.extend(item.can_move(direction))
+        return ret_vals
 
     def move(self, direction : Position):
-        new_pos = self.position + direction
-        item = self.buffer[new_pos]
-        if item != None:
-            item.move(direction)
-        self.buffer[self.position] = None
+        new_pos  = self.position + direction
+        new_places = []
+        old_places = []
+        for x in range(self.size[0]):
+            for y in range(self.size[1]):
+                new_places.append(Position(new_pos.x + x, new_pos.y + y))
+                old_places.append(Position(self.position.x + x, self.position.y + y))
+
+
+        items = set([self.buffer[place] for place in new_places])
+        for item in items:
+            if item != None and item != self:
+                item.move(direction)
+
+        for place in old_places:
+            self.buffer[place] = None
+        for place in new_places:
+            self.buffer[place] = self
         self.position = new_pos
-        self.buffer[self.position] = self
 
     def getGPS(self):
         return self.position.x + self.position.y * 100
 
 
 class Robot(Item):
-    character = '@'
+    character = itertools.cycle(['@'])
+
+    def __init__(self, position, buffer):
+        super().__init__(position, buffer)
+        self.size = (1, 1)
 
 class Wall(Item):
-    character = '#'
+    character = itertools.cycle(['#'])
 
 class Box(Item):
-    character = 'O'
+    character = itertools.cycle(['[', ']'])
 
 def find_assets(warehouse):
     walls = []
@@ -70,20 +100,20 @@ def find_assets(warehouse):
     for y, row in enumerate(warehouse):
         for x, item in enumerate(row):
             if item == '@':
-                robot = Position(x, y)
+                robot = Position(x * 2, y)
             if item == '#':
-                walls.append(Position(x, y))
+                walls.append(Position(x * 2, y))
             if item == 'O':
-                boxes.append(Position(x, y))
+                boxes.append(Position(x * 2, y))
 
     return walls, boxes, robot
 
 def main():
-    warehouse, instructions = read_input("day15/input/input.txt")
+    warehouse, instructions = read_input("day15/input/example_large.txt")
 
     wall_positions, box_positions, robot_position = find_assets(warehouse)
 
-    buffer = Buffer(len(warehouse), len(warehouse[0]))
+    buffer = Buffer(len(warehouse), len(warehouse[0] * 2))
 
     walls = []
     for position in wall_positions:
@@ -105,7 +135,8 @@ def main():
             wall.draw()
         robot.draw()
     draw()
-    # buffer.show()
+    buffer.show()
+
 
     direction = {
         '<' : Position(-1,  0),
@@ -115,11 +146,11 @@ def main():
     }
 
     for instruction in instructions:
-        if robot.can_move(direction[instruction]):
+        if all(robot.can_move(direction[instruction])):
             robot.move(direction[instruction])
 
     draw()
-    # buffer.show()
+    buffer.show()
 
     sum = 0
     for box in boxes:
