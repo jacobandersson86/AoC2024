@@ -10,7 +10,7 @@ def read_input(file):
     return connections
 
 def main():
-    connections = read_input("day23/input/example.txt")
+    connections = read_input("day23/input/input.txt")
 
     G = nx.Graph()
     G.add_edges_from(connections)
@@ -22,35 +22,11 @@ def main():
                 cycles_with_t.append(computer)
                 break
 
-    for cycle in cycles_with_t:
-        print(cycle)
+    print(f"Part 1: {len(cycles_with_t)}")
 
-    print(f"Part 1 {len(cycles_with_t)}")
-
-    max_connection = 0
-    max_cycle = None
-    for cycle in sorted(nx.simple_cycles(G)):
-        if len(cycle) > max_connection:
-            max_cycle = cycle
-            max_connection = len(cycle)
-
-    print(max_cycle)
-
-    # nodes = nx.nodes(G)
-
-
-    # for node in nodes:
-    #     print(node)
-    #     print(list(G.edges(node)))
-
-
-    # # subax1 = plt.subplot(121)
-    # nx.draw(G, with_labels=True, font_weight='bold')
-
-    # # print(list(nx.find_cycle(G)))
-    # plt.show()
-
-
+    cliques = list(nx.find_cliques(G))
+    largest_cliques = next(reversed(sorted(cliques, key=len)))
+    print(f"Part 2: {','.join(sorted(largest_cliques))}")
 
 if __name__ == '__main__':
     main()
