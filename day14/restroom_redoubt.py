@@ -35,38 +35,35 @@ def main():
     else :
         width, height = (11, 7)
 
-
-
     print("Initial:")
     print_restroom(width, height, robots)
 
     elapsed = 0
-    for _ in range(1):
-        seconds = 100
-        # end_positions = []
+    for _ in range(10000    ):
+        seconds = 1
         board = PositionRange(Position(0, 0), Position(width, height))
         for i, (pos, speed) in enumerate(robots):
             pos = pos + speed * seconds
-            # if pos.x < 0:
-            #     n = width // abs(pos.x)
-            #     pos.x += width * (n + 1)
-            # if pos.y < 0:
-            #     n = width // abs(pos.y)
-            #     pos.y += width * (n + 1)
             pos = Position(pos.x % width, pos.y % height)
-            # end_positions.append(pos)
             assert(pos in board)
             robots[i] = (pos, speed)
 
         elapsed += seconds
 
-        print(f"After {elapsed} seconds")
-        print_restroom(width, height, robots)
+        sum = 0
+        mid = PositionRange(Position(width // 4, height // 4),        Position((width * 3) // 4, (height * 3) // 4))
+        for pos, _ in robots:
+            if pos in mid:
+                sum += 1
+        if sum >= (width // 4 * height // 4) / 2 :
+            print(f"Part 2: After {elapsed} seconds")
+            print_restroom(width, height, robots)
 
     q0 = PositionRange(Position(0,0),                             Position(width // 2 , height // 2))
     q1 = PositionRange(Position(width // 2 + 1 ,0),               Position(width + 1, height // 2))
     q2 = PositionRange(Position(0, height // 2 + 1),              Position(width // 2, height + 1))
     q3 = PositionRange(Position(width // 2 + 1, height // 2 + 1), Position(width +1, height + 1) )
+
 
     zones = []
     for quadrant in [q0, q1, q2, q3]:
@@ -78,7 +75,7 @@ def main():
         zones.append(sum)
 
     final_sum = math.prod(zones)
-    print(final_sum)
+    print(f"Part 1 {final_sum}")
 
 if __name__ == '__main__':
     main()
